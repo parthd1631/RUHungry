@@ -130,9 +130,9 @@ public class RUHungry {
                 //System.out.println(dishes.getName());
                 //System.out.println(dishes.getStockID());  
 
-                MenuNode node = new MenuNode(dishes, menuVar[indexOfCategories]);
+                MenuNode menuNodes = new MenuNode(dishes, menuVar[indexOfCategories]);
                 //System.out.println(node.getDish()); 
-                menuVar[indexOfCategories] = node; 
+                menuVar[indexOfCategories] = menuNodes; 
                 //System.out.println(menuVar[counterForDishes]); 
                 counterForDishes++; 
             }
