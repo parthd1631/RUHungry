@@ -216,7 +216,14 @@ public class RUHungry {
 
     public void addStockNode ( StockNode newNode ) {
 
-	// WRITE YOUR CODE HERE
+        stockVarSize = StdIn.readInt(); 
+        stockVar = new StockNode[stockVarSize];
+        int ID = newNode.getIngredient().getID(); 
+        int index = ID % stockVarSize;
+        if(stockVar[index] !=null) {
+            stockVar[index].setNextStockNode(newNode);
+        }
+        stockVar[index] = newNode; 
     }
 
     /**
@@ -231,8 +238,8 @@ public class RUHungry {
      */
    
     public StockNode findStockNode (int ingredientID) {
-
-	// WRITE YOUR CODE HERE
+    
+	
 
         return null; // update the return value
     }
@@ -342,6 +349,24 @@ public class RUHungry {
     public void createStockHashTable (String inputFile){
         
         StdIn.setFile(inputFile); // opens inputFile to be read by StdIn
+        stockVarSize = Integer.parseInt(StdIn.readLine()); 
+        int counter = 0; 
+
+        while(counter<stockVarSize) {
+            String [] line = StdIn.readLine().split(" "); 
+            int id = Integer.parseInt(line[0]); 
+            String name = null;
+            for(int i = 1; i<line.length; i++){
+                name += line[i]; 
+            } 
+            double cost = Double.parseDouble(StdIn.readLine()); 
+            int stock = Integer.parseInt(StdIn.readLine()); 
+            Ingredient ingredients = new Ingredient(id, name, stock, cost); 
+            StockNode sNode = new StockNode(ingredients, null);
+            addStockNode(sNode);
+            counter++; 
+        }
+
 
 	// WRITE YOUR CODE HERE
 
