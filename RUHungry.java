@@ -216,15 +216,17 @@ public class RUHungry {
 
     public void addStockNode ( StockNode newNode ) {
 
-        stockVarSize = StdIn.readInt(); 
-        stockVar = new StockNode[stockVarSize];
         int ID = newNode.getIngredient().getID(); 
         int index = ID % stockVarSize;
         if(stockVar[index] !=null) {
-            stockVar[index].setNextStockNode(newNode);
+            StockNode temp = stockVar[index]; 
+            newNode.setNextStockNode(temp);
+            stockVar[index] = newNode;
         }
+        
         stockVar[index] = newNode; 
     }
+    
 
     /**
      * This method finds an ingredient from StockVar (given the ingredientID)
@@ -238,10 +240,21 @@ public class RUHungry {
      */
    
     public StockNode findStockNode (int ingredientID) {
-    
-	
-
-        return null; // update the return value
+        StockNode stockNode = null;
+        
+        for ( int index = 0; index < stockVar.length; index ++ ){
+            
+            StockNode ptr = stockVar[index];
+            
+            while ( ptr != null ){
+                if ( ptr.getIngredient().getID()== ingredientID ){
+                    return ptr;
+                } else {  
+                    ptr = ptr.getNextStockNode();
+                }
+            }
+        }
+        return stockNode;
     }
 
     /**
@@ -290,9 +303,14 @@ public class RUHungry {
      */
     
     public void updateStock (String ingredientName, int ingredientID, int stockAmountToAdd) {
-
-	// WRITE YOUR CODE HERE
-
+        int stockLevel = 0;
+        for(int i = 0; i < stockVar.length; i++){
+            stockLevel = stockVar[i].getIngredient().getStockLevel();
+            if(findStockNode(ingredientName) == stockVar[i] || findStockNode(ingredientID) == stockVar[i]) {
+                stockLevel+= stockAmountToAdd;
+                stockVar[i].getIngredient().setStockLevel(stockLevel);
+            }
+        }
     }
 
     /**
@@ -316,7 +334,27 @@ public class RUHungry {
 
     public void updatePriceAndProfit() {
 
-	// WRITE YOUR CODE HERE
+        for(int i = 0; i < menuVar.length; i++) { 
+            while(menuVar[i].getNextMenuNode()!= null) {
+                double dishCost = 0.0;
+                double dishPrice = 0.0;
+                int [] ingredientIDs = menuVar[i].getDish().getStockID(); 
+                for(int j = 0; j < ingredientIDs.length; j++) {
+                    //System.out.println(ingredientIDs[j]);
+                    dishCost+= findStockNode(ingredientIDs[j]).getIngredient().getCost(); 
+                    //System.out.println(findStockNode(ingredientIDs[j]).getIngredient());
+                    //System.out.println(findStockNode(ingredientIDs[j]).getIngredient().getCost());  
+                    //System.out.println(dishCost); 
+                }
+                dishPrice = dishCost * 1.2; 
+                //System.out.println(dishPrice);
+                menuVar[i].getDish().setPriceOfDish(dishPrice);
+                //System.out.println(menuVar[i].getDish().getPriceOfDish());
+                menuVar[i].getDish().setProfit(dishPrice-dishCost);
+                //System.out.println(menuVar[i].getDish().getProfit());
+                menuVar[i] = menuVar[i].getNextMenuNode();
+            }
+        }
     }
 
     /**
@@ -349,27 +387,28 @@ public class RUHungry {
     public void createStockHashTable (String inputFile){
         
         StdIn.setFile(inputFile); // opens inputFile to be read by StdIn
-        stockVarSize = Integer.parseInt(StdIn.readLine()); 
-        int counter = 0; 
-
-        while(counter<stockVarSize) {
-            String [] line = StdIn.readLine().split(" "); 
-            int id = Integer.parseInt(line[0]); 
-            String name = null;
-            for(int i = 1; i<line.length; i++){
-                name += line[i]; 
-            } 
-            double cost = Double.parseDouble(StdIn.readLine()); 
-            int stock = Integer.parseInt(StdIn.readLine()); 
-            Ingredient ingredients = new Ingredient(id, name, stock, cost); 
-            StockNode sNode = new StockNode(ingredients, null);
-            addStockNode(sNode);
-            counter++; 
+        stockVarSize = StdIn.readInt();
+        stockVar = new StockNode[stockVarSize];
+        int index = 0; 
+        //System.out.println(stockVar);
+        while(index < stockVarSize) {
+            while(!StdIn.isEmpty()) {
+                int id = StdIn.readInt();
+                //System.out.println(id); 
+                StdIn.readChar(); 
+                String name = StdIn.readLine();
+                //System.out.println(name);
+                double cost = StdIn.readDouble(); 
+                //System.out.println(cost);
+                int stock = StdIn.readInt(); 
+                //System.out.println(stock);
+                Ingredient ingredient = new Ingredient(id, name, stock, cost); 
+                StockNode sNode = new StockNode(ingredient, stockVar[index]); 
+                //System.out.println(sNode.getIngredient().getStockLevel());
+                addStockNode(sNode);
+            }
+            index++; 
         }
-
-
-	// WRITE YOUR CODE HERE
-
     }
 
     /*
@@ -388,7 +427,13 @@ public class RUHungry {
 
     public void addTransactionNode ( TransactionData data ) { // method adds new transactionNode to the end of LL
 
-	// WRITE YOUR CODE HERE
+    TransactionNode transactions = new TransactionNode(data, null); 
+    TransactionNode temp = transactionVar; 
+    while(temp.getNext()!=null) {
+        temp=temp.getNext();
+    }
+    
+    temp.setNext(transactions);
 	
     }
 
@@ -412,9 +457,18 @@ public class RUHungry {
      */
 
     public boolean checkDishAvailability (String dishName, int numberOfDishes){
+        
+            MenuNode dishes = findDish(dishName);
+            Dish specificDish = dishes.getDish(); 
+            int [] ingredient = specificDish.getStockID();
+            for(int i = 0; i<ingredient.length; i++) {
+                int temp = findStockNode(ingredient[i]).getIngredient().getStockLevel(); 
+                if(temp >= numberOfDishes * temp) {
+                    return true;
+                }
+            }
 
-	// WRITE YOUR CODE HERE
-	
+        
         return false; // update the return value
     }
 
@@ -441,8 +495,22 @@ public class RUHungry {
     public void order (String dishName, int quantity){
 
 	// WRITE YOUR CODE HERE
-        
-    }
+    for(int i = 0; i < menuVar.length; i++) {
+        while(menuVar[i]!=null) {
+            if(checkDishAvailability(dishName, quantity)) {
+                String order = "order"; 
+                double profit = findDish(dishName).getDish().getProfit() * quantity; 
+                TransactionData prepared = new TransactionData(order, dishName, quantity, profit, true); 
+                addTransactionNode(prepared);
+                int [] ids = findDish(dishName).getDish().getStockID();
+                for(int j = 0; i <ids.length; j++) {
+                    updateStock(findStockNode(ids[j]).getIngredient().getName(), findStockNode(ids[j]).getIngredient().getID(), -(quantity));
+                }
+            }
+            menuVar[i] = menuVar[i].getNextMenuNode();
+        }
+    }    
+}
 
     /**
      * This method returns the total profit for the day
