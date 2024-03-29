@@ -335,10 +335,11 @@ public class RUHungry {
     public void updatePriceAndProfit() {
 
         for(int i = 0; i < menuVar.length; i++) { 
-            while(menuVar[i].getNextMenuNode()!= null) {
+            MenuNode temp = menuVar[i]; 
+            while(temp!=null) {
                 double dishCost = 0.0;
                 double dishPrice = 0.0;
-                int [] ingredientIDs = menuVar[i].getDish().getStockID(); 
+                int [] ingredientIDs = temp.getDish().getStockID(); 
                 for(int j = 0; j < ingredientIDs.length; j++) {
                     //System.out.println(ingredientIDs[j]);
                     dishCost+= findStockNode(ingredientIDs[j]).getIngredient().getCost(); 
@@ -348,11 +349,12 @@ public class RUHungry {
                 }
                 dishPrice = dishCost * 1.2; 
                 //System.out.println(dishPrice);
-                menuVar[i].getDish().setPriceOfDish(dishPrice);
+                temp.getDish().setPriceOfDish(dishPrice);
                 //System.out.println(menuVar[i].getDish().getPriceOfDish());
-                menuVar[i].getDish().setProfit(dishPrice-dishCost);
+                temp.getDish().setProfit(dishPrice-dishCost);
                 //System.out.println(menuVar[i].getDish().getProfit());
-                menuVar[i] = menuVar[i].getNextMenuNode();
+                //menuVar[i] = menuVar[i].getNextMenuNode();
+                temp = temp.getNextMenuNode(); 
             }
         }
     }
@@ -427,14 +429,13 @@ public class RUHungry {
 
     public void addTransactionNode ( TransactionData data ) { // method adds new transactionNode to the end of LL
 
-    TransactionNode transactions = new TransactionNode(data, null); 
-    TransactionNode temp = transactionVar; 
-    while(temp.getNext()!=null) {
-        temp=temp.getNext();
-    }
-    
-    temp.setNext(transactions);
-	
+        TransactionNode transactions = new TransactionNode(data, null); 
+        TransactionNode temp = transactionVar; 
+        while(temp!=null) {
+            if(temp.getNext()==null) {
+                temp.setNext(transactions);
+            }
+        }
     }
 
     /**
@@ -457,20 +458,22 @@ public class RUHungry {
      */
 
     public boolean checkDishAvailability (String dishName, int numberOfDishes){
-        
-            MenuNode dishes = findDish(dishName);
-            Dish specificDish = dishes.getDish(); 
-            int [] ingredient = specificDish.getStockID();
-            for(int i = 0; i<ingredient.length; i++) {
-                int temp = findStockNode(ingredient[i]).getIngredient().getStockLevel(); 
-                if(temp >= numberOfDishes * temp) {
-                    return true;
-                }
-            }
+        MenuNode dish = findDish(dishName); 
+        int [] stockIDs = dish.getDish().getStockID(); 
+        int numOfStock = 0; 
 
-        
-        return false; // update the return value
+        for(int i = 0; i <stockIDs.length; i++) {
+            numOfStock += findStockNode(stockIDs[i]).getIngredient().getStockLevel();
+        }
+
+        if(numOfStock >= numberOfDishes * findDish(dishName).getDish().getStockID().length) {
+            return true;
+        }
+
+        return false; 
     }
+        
+        
 
     /**
      * PICK UP LINE OF THE METHOD:
@@ -494,23 +497,47 @@ public class RUHungry {
 
     public void order (String dishName, int quantity){
 
-	// WRITE YOUR CODE HERE
-    for(int i = 0; i < menuVar.length; i++) {
-        while(menuVar[i]!=null) {
-            if(checkDishAvailability(dishName, quantity)) {
-                String order = "order"; 
-                double profit = findDish(dishName).getDish().getProfit() * quantity; 
-                TransactionData prepared = new TransactionData(order, dishName, quantity, profit, true); 
-                addTransactionNode(prepared);
-                int [] ids = findDish(dishName).getDish().getStockID();
-                for(int j = 0; i <ids.length; j++) {
-                    updateStock(findStockNode(ids[j]).getIngredient().getName(), findStockNode(ids[j]).getIngredient().getID(), -(quantity));
-                }
+        if(checkDishAvailability(dishName, quantity)) {
+            String order = "order"; 
+            String item = dishName; 
+            int amount = quantity; 
+            double profit = findDish(dishName).getDish().getProfit() * quantity; 
+            TransactionData success = new TransactionData(order, item, amount, profit, true); 
+            addTransactionNode(success);
+            //System.out.println(success.getItem() + " " + success.getAmount() + " " + success.getProfit() + " " + success.getSuccess());
+            int [] stockId = findDish(dishName).getDish().getStockID(); 
+            for(int i = 0; i < stockId.length; i++) {
+                updateStock(null, stockId[i], amount*-1);
             }
-            menuVar[i] = menuVar[i].getNextMenuNode();
         }
-    }    
-}
+
+        else {
+            String type = "order";
+            TransactionData failure = new TransactionData(type, dishName, quantity, 0, false); 
+            MenuNode temp = findDish(dishName); 
+            while(temp!=null) {
+                if(checkDishAvailability(dishName, quantity)) {
+                    String order = "order"; 
+                    String item = dishName; 
+                    int amount = quantity; 
+                    double profit = findDish(dishName).getDish().getProfit() * quantity; 
+                    TransactionData success = new TransactionData(order, item, amount, profit, true); 
+                    addTransactionNode(success);
+                    int [] stockId = findDish(dishName).getDish().getStockID(); 
+                    for(int i = 0; i < stockId.length; i++) {
+                        updateStock(null, stockId[i], amount*-1);
+                    }
+                }
+
+                else {
+                    addTransactionNode(failure);
+                    //System.out.println(failure.getItem() + " " + failure.getAmount() + " " + failure.getProfit() + " " + failure.getSuccess());
+
+                }
+                temp = temp.getNextMenuNode(); 
+            }
+        }
+    }
 
     /**
      * This method returns the total profit for the day
