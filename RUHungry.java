@@ -500,11 +500,10 @@ public class RUHungry {
      */
 
     public void order (String dishName, int quantity){
-        String order = "order"; 
-
+        
         if(checkDishAvailability(dishName, quantity)) {
             double dishProfit = findDish(dishName).getDish().getProfit();
-            TransactionData success = new TransactionData(order, dishName, quantity, dishProfit*quantity, true); 
+            TransactionData success = new TransactionData("order", dishName, quantity, dishProfit*quantity, true); 
             addTransactionNode(success);
             int [] stockID = findDish(dishName).getDish().getStockID(); 
             for(int i = 0; i<stockID.length; i++) {
@@ -513,61 +512,52 @@ public class RUHungry {
         }
 
         else {
-            TransactionData failure = new TransactionData(order, dishName, quantity, 0, false); 
-            addTransactionNode(failure);
-            MenuNode next = findDish(dishName).getNextMenuNode();
-            MenuNode node = null; 
-            if(next == null) {
-                for(int i = 0; i < menuVar.length; i++) {
-                    MenuNode temp = menuVar[i]; 
-                    while(temp!=null) {
-                        if(temp.getDish().getName().equals(dishName)) {
-                            node = menuVar[i]; 
-                        }
-                        temp = temp.getNextMenuNode(); 
-                    }
-                }
+            TransactionData failed = new TransactionData("order", dishName, quantity, 0, false);
+            addTransactionNode(failed);
 
-                if(checkDishAvailability(node.getDish().getName(), quantity)) {
-                    double dishProfit = findDish(node.getDish().getName()).getDish().getProfit();
-                    TransactionData success = new TransactionData(order, node.getDish().getName(), quantity, dishProfit*quantity, true);
-                    //System.out.println(success.getProfit());  
-                    addTransactionNode(success);
-                    int [] stockID = findDish(node.getDish().getName()).getDish().getStockID(); 
-                    for(int i = 0; i<stockID.length; i++) {
-                        updateStock(null, stockID[i], (quantity * -1));
-                    }
-                }
+            String specificCategory = findDish(dishName).getDish().getCategory(); 
+            int categoryIndex = findCategoryIndex(specificCategory); 
+            MenuNode currDish = findDish(dishName);
+            MenuNode first = menuVar[categoryIndex]; 
+            MenuNode temp = null; 
 
-                else {
-                    failure.setItem(node.getDish().getName());
-                    addTransactionNode(failure);
-                }
+            if(currDish.getNextMenuNode()==null) {
+                temp = first; 
             }
 
             else {
-                while(next!=null) {
-                    if(checkDishAvailability(next.getDish().getName(), quantity)) {
-                        double dishProfit = findDish(next.getDish().getName()).getDish().getProfit();
-                        TransactionData success = new TransactionData(order, next.getDish().getName(), quantity, dishProfit*quantity, true); 
-                        //System.out.println(success.getProfit()); 
-                        addTransactionNode(success);
-                        int [] stockID = findDish(next.getDish().getName()).getDish().getStockID(); 
-                        for(int i = 0; i<stockID.length; i++) {
-                            updateStock(null, stockID[i], (quantity * -1));
-                        }
-                    }
-    
-                    else {
-                        TransactionData fail = new TransactionData(order, next.getDish().getName(), quantity, 0, false); 
-                        addTransactionNode(fail);
+                temp = currDish.getNextMenuNode(); 
+            }
+
+            while(temp!=currDish) {
+                if(checkDishAvailability(temp.getDish().getName(), quantity)) {
+                    double dishProfit = findDish(temp.getDish().getName()).getDish().getProfit(); 
+                    TransactionData success = new TransactionData("order", temp.getDish().getName(), quantity, dishProfit*quantity, true); 
+                    addTransactionNode(success);
+                    int [] stockID = temp.getDish().getStockID(); 
+                    for(int i = 0; i < stockID.length; i++) {
+                        updateStock(null, stockID[i], (quantity*-1));
                     }
 
-                    next = next.getNextMenuNode(); 
+                    break; 
+                }
+
+                else {
+                    TransactionData failure = new TransactionData("order", temp.getDish().getName(), quantity, 0, false);
+                    addTransactionNode(failure);
+                }
+
+                if(temp.getNextMenuNode() == null) {
+                    temp = first; 
+                }
+
+                else {
+                    temp = temp.getNextMenuNode(); 
                 }
             }
         }
     }
+    
                 
 
     /**
@@ -581,14 +571,14 @@ public class RUHungry {
 
     public double profit () {
 
-	// WRITE YOUR CODE HERE
+    // WRITE YOUR CODE HERE
         TransactionNode temp = transactionVar; 
         double profit = 0.0; 
         while(temp!=null) {
             profit += temp.getData().getProfit(); 
             temp = temp.getNext(); 
         }
-	
+    
         return profit; // update the return value
     }
 
@@ -672,7 +662,7 @@ public class RUHungry {
     public void createTables ( String inputFile ) { 
 
         StdIn.setFile(inputFile);
-	
+    
         int numberOfTables = StdIn.readInt();
         tableSeats = new int[numberOfTables];
         tables     = new Party[numberOfTables];
@@ -712,7 +702,7 @@ public class RUHungry {
 
     public void seatAllGuests ( Queue<Party> waitingQueue ) {
 
-	// WRITE YOUR CODE HERE
+    // WRITE YOUR CODE HERE
 
     }
 
